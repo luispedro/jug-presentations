@@ -1,9 +1,10 @@
 \documentclass{beamer}
 \usetheme{EMBL}
+\usepackage{tikz}
 \usepackage{lpc}
 
 \title[Jug]{Jug: Executing Parallel Tasks in Python}
-\author{Presented by Luis Pedro Coelho}
+\author{Luis Pedro Coelho}
 \institute{EMLB}
 \date{21 May 2013}
 
@@ -15,6 +16,133 @@
 
 \begin{document}
 \frame{\titlepage}
+
+\begin{frame}[fragile]
+\frametitle{Jug: Coarse Parallel Tasks in Python}
+
+\begin{itemize}
+\item Parallel Python code
+\item Memoization
+
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Parallel Problem (Example)}
+
+
+\begin{block}{Members of Parliament}
+Given a list of the Wikipedia page for all British MPs.
+\begin{itemize}
+\item Get word counts for each page
+\item Merge the word counts
+\item Get over-represented counts for each MP
+\end{itemize}
+\end{block}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Dependency Structure}
+
+\begin{center}
+\begin{tikzpicture}
+\node (load) at (0,0) [draw] {load};
+\node (collect) at (4,0) [draw] {collect};
+\node (sum) at (8,0) [draw] {sum};
+\node (output) at (10,0) [draw] {output};
+
+\path[->]
+    (sum) edge (output);
+
+\foreach \y in {-2,-1,0,1,2} {%
+    \node (features\y) at (2,\y) [draw] {features};
+    \path[->]
+        (load) edge (features\y)
+        (features\y) edge (collect);
+}
+
+\foreach \y in {-2,-1,0,1,2} {%
+    \node (fold\y) at (6,\y) [draw] {fold};
+    \path[->]
+        (collect) edge (fold\y)
+        (fold\y) edge (sum);
+}
+\end{tikzpicture}
+
+\end{center}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Jug Processes are Separate Processes}
+\begin{itemize}
+\item \alert{No Global Interpreter Lock} issues
+\item Can run on \alert{separate machines}
+\item Do not need to start at the same time
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Two Backends Are Available}
+\begin{block}{Filesystem}
+\begin{itemize}
+\item Default backend
+\item Carefully designed to work on NFS
+\end{itemize}
+\end{block}
+
+\begin{block}{Redis (NoSQL Database)}
+\begin{itemize}
+\item Redis is a file-backed store
+\item Ideal for many small ``files''
+\item All workers talk to same database
+\end{itemize}
+\end{block}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Jug Enhances Reproducibility}
+
+\begin{itemize}
+\item ``What was the parameter that generated this intermediate result?''
+\item ``Deleted the intermediate results, reran; now everything is different.''
+\end{itemize}
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Summary}
+\begin{block}{Jug is Good For}
+\begin{itemize}
+\item Coarse tasks (at least 1 second, ideally a few more)
+\item Data that fits on one disk
+\item Fan-out/Reduce/Fan-out modes
+\end{itemize}
+\end{block}
+
+\begin{block}{Jug is Not Appropriate For}
+\begin{itemize}
+\item Parallelization at micro level
+\item Data that does not fit in one disk
+\end{itemize}
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Finding Out More About Jug\ldots}
+\begin{itemize}
+\item \url{http://metarabbit.wordpress.com}\\My blog, latest post is about jug \alert{has links to these slides}
+\item \url{http://github.com/luispedro/jug}\\the code
+\item \url{http://jug.rtfd.org}\\the fine documentation
+\item \url{http://groups.google.com/group/jug-users}\\google mailing list
+\item \url{http://luispedro.org/software/jug}
+\item luis@luispedro.org
+\end{itemize}
+
+\end{frame}
 
 \end{document}
 
