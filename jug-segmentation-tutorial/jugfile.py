@@ -3,17 +3,17 @@ from jug import TaskGenerator
 from glob import glob
 
 @TaskGenerator
-def method1(image):
+def method1(image, sigma):
     image = mh.imread(image)[:,:,0]
-    image  = mh.gaussian_filter(image, 2)
+    image  = mh.gaussian_filter(image, sigma)
     binimage = (image > image.mean())
     labeled, _ = mh.label(binimage)
     return labeled
 
 @TaskGenerator
-def method2(image):
+def method2(image, sigma):
     image = mh.imread(image)[:,:,0]
-    image  = mh.gaussian_filter(image, 4)
+    image  = mh.gaussian_filter(image, sigma)
     image = mh.stretch(image)
     binimage = (image > mh.otsu(image))
     labeled, _ = mh.label(binimage)
@@ -35,8 +35,8 @@ def print_results(results):
 inputs = glob('images/*.jpg')
 results = []
 for im in inputs:
-    m1 = method1(im)
-    m2 = method2(im)
+    m1 = method1(im, 2)
+    m2 = method2(im, 4)
     ref = im.replace('images','references').replace('jpg','png')
     v1 = compare(m1, ref)
     v2 = compare(m2, ref)
