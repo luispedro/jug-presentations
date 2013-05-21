@@ -8,7 +8,7 @@
 
 \title[Jug]{Jug: Executing Parallel Tasks in Python}
 \author{Luis Pedro Coelho}
-\institute{EMLB}
+\institute{EMBL}
 \date{21 May 2013}
 
 \def\iverson#1{%
@@ -30,7 +30,16 @@
 \end{frame}
 
 \begin{frame}[fragile]
-\frametitle{Evaluating Segmentation Methods}
+\frametitle{Example: Evaluating Segmentation Methods}
+
+\centering
+\includegraphics<1>[width=.7\textwidth]{image_stretched.jpeg}
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Example: Evaluating Segmentation Methods}
 
 \begin{block}{Problem Statement}
 \begin{enumerate}
@@ -53,7 +62,7 @@
 \end{frame}
 
 \begin{frame}[fragile]
-\frametitle{Segmenting Images}
+\frametitle{Reference Segmentations}
 
 \centering
 \includegraphics<1>[width=.7\textwidth]{image_stretched.jpeg}
@@ -87,15 +96,21 @@ def method1(image, sigma):
 \end{frame}
 
 \begin{frame}[fragile]
-\frametitle{Segmentation Methods}
+\frametitle{Segmentation Methods In Demo}
 
+
+\begin{block}{Methods Under Study}
 
 \begin{enumerate}
 \item Threshold with Otsu
 \item Threshold with mean
 \end{enumerate}
 
+\end{block}
+
 \pause
+
+\begin{block}{This is a Demo!}
 
 \begin{itemize}
 \item Neither of these methods is very good!
@@ -103,6 +118,8 @@ def method1(image, sigma):
 \item Read \href{http://www.ncbi.nlm.nih.gov/pmc/articles/PMC2901896/}{our paper} for what methods actually work.\\
 (or just come talk to me).
 \end{itemize}
+
+\end{block}
 
 \end{frame}
 
@@ -158,7 +175,8 @@ results = []
 for im in inputs:
     m1 = method1(im, 2)
     m2 = method2(im, 4)
-    ref = im.replace('images','references').replace('jpg','png')
+    ref = im.replace('images','references') \
+            .replace('jpg','png')
     v1 = compare(m1, ref)
     v2 = compare(m2, ref)
     results.append( (v1,v2) )
@@ -171,7 +189,12 @@ The above code looks like pure Python!
 \begin{frame}[fragile]
 \frametitle{Demo Again}
 
-Still working fine\ldots
+Also, ask questions\ldots
+
+By the way, if you're following at home, (i.e., downloaded the slides); you can
+see the code
+\href{https://github.com/luispedro/jug-presentations/tree/master/jug-segmentation-tutorial}{on
+github}.
 
 \end{frame}
 
@@ -340,7 +363,7 @@ def maybe-run-task(task, backend):
 
 \begin{block}{Typical \alert{Dark Side} of Computational Analysis}
 \begin{itemize}
-\item ``What was the parameter that generated this intermediate result?''
+\item ``What was the parameter that generated this result? I think it was ½, right? Had to be.''
 \item ``Deleted the intermediate results, reran; now everything is different.''
 \item ``We cannot reproduce the table in our own paper.''
 \end{itemize}
