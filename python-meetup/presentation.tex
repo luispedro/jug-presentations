@@ -1,5 +1,7 @@
 \documentclass{beamer}
 \usetheme{EMBL}
+\definecolor{links}{HTML}{2A1B81}
+\hypersetup{colorlinks,linkcolor=,urlcolor=links}
 \usepackage{tikz}
 \usepackage{lpc}
 \usepackage{python}
@@ -214,6 +216,7 @@ eight = Task(double, four)
 
 \path[->]
     (four) edge (two);
+\path[->]
     (eight) edge (four);
 \end{tikzpicture}
 
@@ -226,12 +229,35 @@ eight = Task(double, four)
 
 \begin{python}
 def hash-of(task):
-    return cryto-hash( { task.function, task.args, task.kwargs })
+    return crypto-hash( {
+            task.function,
+            task.args,
+            task.kwargs })
 \end{python}
 
 \begin{itemize}
+\item If \alert{task.args} are other tasks, recurse!
 \item That's \alert{pseudo-code}
 \item Real-life code \alert{slightly more complex}
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{The task hash encodes whole computation path}
+
+\begin{python}
+@TaskGenerator
+def double(x):
+    return x*2
+
+four = double(2)
+eight = double(four)
+\end{python}
+
+\begin{itemize}
+\item \alert{four} encodes \verb+double(2)+
+\item \alert{eight} encodes \verb+double(double(2))+
 \end{itemize}
 
 \end{frame}
@@ -288,60 +314,12 @@ def maybe-run-task(task, backend):
 \end{frame}
 
 \begin{frame}[fragile]
-\frametitle{Fan-Out/Collect/Fan-Out Dependency Structure}
-
-\begin{center}
-\begin{tikzpicture}
-\node (load) at (0,0) [draw] {load};
-\node (collect) at (4,0) [draw] {collect};
-\node (collect2) at (8,0) [draw] {collect};
-\node (output) at (10,0) [draw] {output};
-
-\path[->]
-    (collect2) edge (output);
-
-\foreach \y in {-2,-1,0,1,2} {%
-    \node (compute\y) at (2,\y) [draw] {compute};
-    \path[->]
-        (load) edge (compute\y)
-        (compute\y) edge (collect);
-}
-
-\foreach \y in {-2,-1,0,1,2} {%
-    \node (compute2\y) at (6,\y) [draw] {compute};
-    \path[->]
-        (collect) edge (compute2\y)
-        (compute2\y) edge (collect2);
-}
-\end{tikzpicture}
-
-\end{center}
-
-\end{frame}
-
-\begin{frame}[fragile]
 \frametitle{Jug Processes are Separate Processes!}
 \begin{itemize}
-\item \alert{No Global Interpreter Lock} issues
+\item \alert{No GIL (Global Interpreter Lock)} issues
 \item Can run on \alert{separate machines}
 \item Do not need to start at the same time
 \end{itemize}
-\end{frame}
-
-
-\begin{frame}[fragile]
-\frametitle{Jug Enhances Reproducibility}
-
-\begin{itemize}
-\item ``What was the parameter that generated this intermediate result?''
-\item ``Deleted the intermediate results, reran; now everything is different.''
-\end{itemize}
-
-\begin{itemize}
-\item With jug, changing parameters \alert{will trigger recomputation of all
-downstream results}.
-\end{itemize}
-
 \end{frame}
 
 
@@ -356,14 +334,39 @@ downstream results}.
 \end{block}
 \end{frame}
 
+
+\begin{frame}[fragile]
+\frametitle{Jug Enhances Reproducibility}
+
+\begin{block}{Typical \alert{Dark Side} of Computational Analysis}
+\begin{itemize}
+\item ``What was the parameter that generated this intermediate result?''
+\item ``Deleted the intermediate results, reran; now everything is different.''
+\item ``We cannot reproduce the table in our own paper.''
+\end{itemize}
+\end{block}
+
+\begin{block}{Advantages of Jug}
+
+
+\begin{itemize}
+\item With jug, changing parameters \alert{will trigger recomputation of all
+downstream results}.
+\item \alert{jug invalidate} handles all dependencies
+\item Unlike \alert{make}, you can use any Python function
+\end{itemize}
+
+\end{block}
+
+\end{frame}
 \begin{frame}[fragile]
 \frametitle{How Much is Jug Used?}
 
 \begin{itemize}
-\item It was stereotypical \alert{scratch an itch} software:\\
-    I wrote it because I needed it.
-\item Not very widely used at the moment.
-\item Slowly picking up:
+\item It started as stereotypical \alert{scratch an itch} software:\\
+    I wrote it because I needed it
+\item Not very widely used at the moment
+\item Slowly picking up (by now 4.5 years old)
 \item 43,000 PyPI downloads\\
     \alert{Was at 13,000 than a year ago}
 \end{itemize}
@@ -392,9 +395,9 @@ downstream results}.
 \begin{frame}[fragile]
 \frametitle{Finding Out More About Jug\ldots}
 \begin{itemize}
-\item \url{http://metarabbit.wordpress.com}\\My blog, latest posts are about jug \alert{has links to these slides}
+\item \url{http://metarabbit.wordpress.com}\\My blog, latest posts are about jug
 \item \url{http://github.com/luispedro/jug}\\the code
-\item \url{http://jug.rtfd.org}\\the fine documentation
+\item \url{http://jug.rtfd.org}\\read the fine documentation
 \item \url{http://groups.google.com/group/jug-users}\\google mailing list
 \item \url{http://luispedro.org/software/jug}
 \item luis@luispedro.org
