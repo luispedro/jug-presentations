@@ -23,13 +23,11 @@
 \begin{itemize}
 \item Parallel Python code
 \item Memoization
-
 \end{itemize}
 \end{frame}
 
 \begin{frame}[fragile]
 \frametitle{Parallel Problem (Example)}
-
 
 \begin{block}{Members of Parliament}
 Given a list of the Wikipedia page for all British MPs.
@@ -43,30 +41,30 @@ Given a list of the Wikipedia page for all British MPs.
 \end{frame}
 
 \begin{frame}[fragile]
-\frametitle{Dependency Structure}
+\frametitle{Fan-Out/Fan-In Dependency Structure}
 
 \begin{center}
 \begin{tikzpicture}
 \node (load) at (0,0) [draw] {load};
 \node (collect) at (4,0) [draw] {collect};
-\node (sum) at (8,0) [draw] {sum};
+\node (collect2) at (8,0) [draw] {collect};
 \node (output) at (10,0) [draw] {output};
 
 \path[->]
-    (sum) edge (output);
+    (collect2) edge (output);
 
 \foreach \y in {-2,-1,0,1,2} {%
-    \node (features\y) at (2,\y) [draw] {features};
+    \node (compute\y) at (2,\y) [draw] {compute};
     \path[->]
-        (load) edge (features\y)
-        (features\y) edge (collect);
+        (load) edge (compute\y)
+        (compute\y) edge (collect);
 }
 
 \foreach \y in {-2,-1,0,1,2} {%
-    \node (fold\y) at (6,\y) [draw] {fold};
+    \node (compute2\y) at (6,\y) [draw] {compute};
     \path[->]
-        (collect) edge (fold\y)
-        (fold\y) edge (sum);
+        (collect) edge (compute2\y)
+        (compute2\y) edge (collect2);
 }
 \end{tikzpicture}
 
@@ -75,7 +73,7 @@ Given a list of the Wikipedia page for all British MPs.
 \end{frame}
 
 \begin{frame}[fragile]
-\frametitle{Jug Processes are Separate Processes}
+\frametitle{Jug Processes are Separate Processes!}
 \begin{itemize}
 \item \alert{No Global Interpreter Lock} issues
 \item Can run on \alert{separate machines}
@@ -89,6 +87,8 @@ Given a list of the Wikipedia page for all British MPs.
 \begin{itemize}
 \item Default backend
 \item Carefully designed to work on NFS
+\item Anything pickle()able can be used as Task output/input.
+\item Numpy arrays are special-cased (for speed and disk-space savings).
 \end{itemize}
 \end{block}
 
@@ -110,8 +110,43 @@ Given a list of the Wikipedia page for all British MPs.
 \item ``Deleted the intermediate results, reran; now everything is different.''
 \end{itemize}
 
+\begin{itemize}
+\item With jug, changing parameters \alert{will trigger recomputation of all
+downstream results}.
+\end{itemize}
+
 \end{frame}
 
+
+\begin{frame}[fragile]
+\frametitle{The Task Dependency Graph}
+<+content+>
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Invalidate All Downstream Results}
+\begin{block}{Case Study}
+\begin{enumerate}
+\item You fix a bug in \alert{method1}.
+\item Now, you need to recompute all \alert{method1} calls.
+\item Also, \alert{print\_results}
+\end{enumerate}
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{How Much is Jug Used?}
+
+\begin{itemize}
+\item It was stereotypical \alert{scratch an itch} software:\\
+    I wrote it because I needed it.
+\item Not very widely used at the moment.
+\item Slowly picking up:
+\item 43,000 PyPI downloads\\
+    \alert{Was at 13,000 than a year ago}
+\end{itemize}
+
+\end{frame}
 
 \begin{frame}[fragile]
 \frametitle{Summary}
@@ -120,6 +155,7 @@ Given a list of the Wikipedia page for all British MPs.
 \item Coarse tasks (at least 1 second, ideally a few more)
 \item Data that fits on one disk
 \item Fan-out/Reduce/Fan-out modes
+\item Batch systems with shared network filesystems
 \end{itemize}
 \end{block}
 
@@ -134,7 +170,7 @@ Given a list of the Wikipedia page for all British MPs.
 \begin{frame}[fragile]
 \frametitle{Finding Out More About Jug\ldots}
 \begin{itemize}
-\item \url{http://metarabbit.wordpress.com}\\My blog, latest post is about jug \alert{has links to these slides}
+\item \url{http://metarabbit.wordpress.com}\\My blog, latest posts are about jug \alert{has links to these slides}
 \item \url{http://github.com/luispedro/jug}\\the code
 \item \url{http://jug.rtfd.org}\\the fine documentation
 \item \url{http://groups.google.com/group/jug-users}\\google mailing list
