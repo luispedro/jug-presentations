@@ -2,6 +2,7 @@
 \usetheme{EMBL}
 \usepackage{tikz}
 \usepackage{lpc}
+\usepackage{python}
 
 \title[Jug]{Jug: Executing Parallel Tasks in Python}
 \author{Luis Pedro Coelho}
@@ -27,21 +28,267 @@
 \end{frame}
 
 \begin{frame}[fragile]
-\frametitle{Parallel Problem (Example)}
+\frametitle{Evaluating Segmentation Methods}
 
-\begin{block}{Members of Parliament}
-Given a list of the Wikipedia page for all British MPs.
+\begin{block}{Problem Statement}
+\begin{enumerate}
+\item You have images to segment
+\item Many algorithms available
+\item Which one is best?
+\end{enumerate}
+\end{block}
+
+\pause
+
+\begin{block}{Solution}
+\begin{enumerate}
+\item Manually segment a few images (reference)
+\item Run algorithms on these images
+\item Compare with reference
+\end{enumerate}
+\end{block}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Segmenting Images}
+
+\centering
+\includegraphics<1>[width=.7\textwidth]{image_stretched.jpeg}
+\includegraphics<2>[width=.7\textwidth]{image_reference.jpeg}
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Segmentation Live Demo}
+
+If your software is really that good, you don't fear a live demo!
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Methods}
+
+\begin{python}
+import mahotas as mh
+def method1(image, sigma):
+    image = mh.imread(image)[:,:,0]
+    image  = mh.gaussian_filter(image, sigma)
+    binimage = (image > image.mean())
+    labeled, _ = mh.label(binimage)
+    return labeled
+\end{python}
+
+\href{http://luispedro.org/software/mahotas}{mahotas} is my \alert{computer vision/image processing} package.
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Segmentation Methods}
+
+
+\begin{enumerate}
+\item Threshold with Otsu
+\item Threshold with mean
+\end{enumerate}
+
+\pause
+
 \begin{itemize}
-\item Get word counts for each page
-\item Merge the word counts
-\item Get over-represented counts for each MP
+\item Neither of these methods is very good!
+\item They are easy to explain \& demo
+\item Read \href{http://www.ncbi.nlm.nih.gov/pmc/articles/PMC2901896/}{our paper} for what methods actually work.\\
+(or just come talk to me).
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Writing a jugfile}
+
+\begin{block}{jugfile.py}
+\begin{python}
+from jug import TaskGenerator
+
+@TaskGenerator
+def method1(image, sigma):
+    ...
+\end{python}
+\end{block}
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Your code can be in multiple files}
+
+
+\begin{block}{segmentation.py}
+\begin{python}
+import mahotas as mh
+
+def method1(image, sigma):
+    ...
+
+\end{python}
+
+\end{block}
+
+\begin{block}{jugfile.py}
+\begin{python}
+from jug import TaskGenerator
+from segmentation import method1
+
+method1 = TaskGenerator(method1)
+
+\end{python}
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Comparing Automated \& Reference Segmentation}
+
+\begin{python}
+from glob import glob
+inputs = glob('images/*.jpg')
+results = []
+for im in inputs:
+    m1 = method1(im, 2)
+    m2 = method2(im, 4)
+    ref = im.replace('images','references').replace('jpg','png')
+    v1 = compare(m1, ref)
+    v2 = compare(m2, ref)
+    results.append( (v1,v2) )
+\end{python}
+
+The above code looks like pure Python!
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Demo Again}
+
+Still working fine\ldots
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Task hashing saves structure of computation}
+
+\begin{block}{Let's look under the hood}
+\begin{python}
+@TaskGenerator
+def double(x):
+    return x*2
+
+four = double(2)
+eight = double(four)
+\end{python}
+
+\alert{converts to}
+
+\begin{python}
+
+def double(x):
+    return x*2
+
+four = Task(double, 2)
+eight = Task(double, four)
+\end{python}
+
+\end{block}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Computation Structure}
+
+
+\begin{center}
+\begin{tikzpicture}
+\node (two) at (0,0) [draw] {2};
+\node (four) at (4,0) [draw] {four};
+\node (eight) at (8,0) [draw] {eight};
+
+\path[->]
+    (four) edge (two);
+    (eight) edge (four);
+\end{tikzpicture}
+
+\end{center}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Compute Hash}
+
+\begin{python}
+def hash-of(task):
+    return cryto-hash( { task.function, task.args, task.kwargs })
+\end{python}
+
+\begin{itemize}
+\item That's \alert{pseudo-code}
+\item Real-life code \alert{slightly more complex}
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Running a Task}
+
+\begin{python}
+def maybe-run-task(task, backend):
+    h = task.hash()
+    if backend.can_load(h):
+        # Nothing to do
+        return
+\end{python}
+\pause
+\begin{python}
+    f = task.function
+    args = []
+    for a in task.args:
+        if is-immediate-value(a):
+            args.append(a)
+        else:
+            args.append(backend.load(a.hash()))
+    # Same thing for kwargs
+    return f(*args)
+
+\end{python}
+
+\begin{itemize}
+\item Again, this is \alert{pseudo-code}
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Two Backends Are Available}
+\begin{block}{Filesystem}
+\begin{itemize}
+\item Default backend
+\item Carefully designed to work on NFS
+\item Anything pickle()able can be used as Task output/input.
+\item Numpy arrays are special-cased (for speed and disk-space savings).
+\end{itemize}
+\end{block}
+
+\begin{block}{Redis (NoSQL Database)}
+\begin{itemize}
+\item Redis is a file-backed store
+\item Ideal for many small ``files''
+\item All workers talk to same database
 \end{itemize}
 \end{block}
 
 \end{frame}
 
 \begin{frame}[fragile]
-\frametitle{Fan-Out/Fan-In Dependency Structure}
+\frametitle{Fan-Out/Collect/Fan-Out Dependency Structure}
 
 \begin{center}
 \begin{tikzpicture}
@@ -81,26 +328,6 @@ Given a list of the Wikipedia page for all British MPs.
 \end{itemize}
 \end{frame}
 
-\begin{frame}[fragile]
-\frametitle{Two Backends Are Available}
-\begin{block}{Filesystem}
-\begin{itemize}
-\item Default backend
-\item Carefully designed to work on NFS
-\item Anything pickle()able can be used as Task output/input.
-\item Numpy arrays are special-cased (for speed and disk-space savings).
-\end{itemize}
-\end{block}
-
-\begin{block}{Redis (NoSQL Database)}
-\begin{itemize}
-\item Redis is a file-backed store
-\item Ideal for many small ``files''
-\item All workers talk to same database
-\end{itemize}
-\end{block}
-
-\end{frame}
 
 \begin{frame}[fragile]
 \frametitle{Jug Enhances Reproducibility}
@@ -117,11 +344,6 @@ downstream results}.
 
 \end{frame}
 
-
-\begin{frame}[fragile]
-\frametitle{The Task Dependency Graph}
-<+content+>
-\end{frame}
 
 \begin{frame}[fragile]
 \frametitle{Invalidate All Downstream Results}
