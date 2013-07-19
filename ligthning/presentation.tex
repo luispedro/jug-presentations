@@ -9,7 +9,7 @@
 \title[Jug]{Jug: Reproducible Research in Python}
 \author[luis@luispedro.org]{Luis Pedro Coelho}
 \institute{EMBL}
-\date{5 July 2013}
+\date{BOSC 2013}
 
 \graphicspath{{figures/}{figures/generated/}{images/}}
 
@@ -34,7 +34,7 @@ def write_output(results):
 
 intermediate = []
 for i in glob('*.txt'):
-    intermediate.append(processing(i))
+    intermediate.append(preprocess(i))
 results = []
 for pvalue in [0.5, 1.0, 2.0, 4.0]
     results.append(compute(intermediate, pvalue))
@@ -60,12 +60,20 @@ def write_output(results):
 
 intermediate = []
 for i in glob('*.txt'):
-    intermediate.append(processing(i))
+    intermediate.append(preprocess(i))
 results = []
 for pvalue in [0.5, 1.0, 2.0, 4.0]
     results.append(compute(intermediate, pvalue))
 write_output(results)
 \end{python}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Running jug\ldots}
+
+\centering
+\includegraphics[width=.8\textwidth]{jug_execute}
+
 \end{frame}
 
 \begin{frame}[fragile]
